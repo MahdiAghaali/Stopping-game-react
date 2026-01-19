@@ -54,8 +54,6 @@ const Chart = (props: Props) => {
     stopMethod,
   } = props;
 
-
-
   const [gameStarted, setGameStarted] = React.useState(false);
   const [gameEnded, setGameEnded] = React.useState(false);
 
@@ -120,6 +118,7 @@ const Chart = (props: Props) => {
         <XAxis
           dataKey="seen"
           type="number"
+          range={[0, 1900]}
           tick={{ fill: "#666", fontSize: 12 }}
           label={{ value: "Seen", position: "insideBottom", offset: -5 }}
         />
@@ -127,14 +126,14 @@ const Chart = (props: Props) => {
           dataKey="included_seen"
           type="number"
           tick={{ fill: "#666", fontSize: 12 }}
-          // label={{
-          //   value: "Included Seen",
-          //   angle: -90,
-          //   position: "insideLeft",
-          // }}
+          label={{
+            value: "Included Seen",
+            angle: -90,
+            position: "insideLeft",
+          }}
         />
 
-        <Line
+        {/* <Line
           type="monotone"
           dataKey="score"
           stroke="#4c66afff"
@@ -142,7 +141,7 @@ const Chart = (props: Props) => {
           dot={false}
           activeDot={{ r: 6 }}
           isAnimationActive={false}
-        />
+        /> */}
 
         {/* Tooltip */}
         <Tooltip

@@ -7,9 +7,9 @@ import type {
 
 
 export type resultT = {
-  userId: number;
+  uuid: string;
   datasetId: number;
-  sessionId:number;
+  sessionID?:number;
   stoppingStep: number;
   score: number;
 }
@@ -31,11 +31,19 @@ export const authApi = baseApi.injectEndpoints({
       }),
       providesTags: [{ type: TagName.Result, id: 'LIST' }],
     }),
+    getLeaderboard: build.query<resultT[], void>({
+      query: () => ({
+        url: '/gameResults/leaderboard',
+        method: 'GET',
+      }),
+      providesTags: [{ type: TagName.Result, id: 'LIST' }],
+    }),
   }),
   overrideExisting: false,
 });
 
 export const { 
   useSubmitResultMutation,
-  useGetAllResultsQuery
+  useGetAllResultsQuery,
+  useGetLeaderboardQuery
 } = authApi;

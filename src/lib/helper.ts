@@ -38,3 +38,16 @@ export function lerpColor(color1: string, color2: string, t: number) {
 export const CalcScore = (row: RowT) => {
   return (Math.round(((row.n_incl_seen / row.n_incl) / (row.n_seen / row.n_total)) * 100) )
 }
+
+const STORAGE_KEY = "anonymous_user_id";
+
+export function getOrCreateUserId(): string {
+  let id = localStorage.getItem(STORAGE_KEY);
+
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(STORAGE_KEY, id);
+  }
+
+  return id;
+}

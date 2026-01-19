@@ -7,6 +7,8 @@ import {
   Button,
   Stack,
 } from '@mui/material';
+import { useInitUserQuery, useUpdateUserByUUIDMutation } from '../../redux/api/auth';
+import { getOrCreateUserId } from '../../lib/helper';
 
 const UserProfileDrawer: React.FC = () => {
   // Mock initial values (later fetched from API/context)
@@ -17,11 +19,24 @@ const UserProfileDrawer: React.FC = () => {
   const [email, setEmail] = useState(initialEmail);
 
   // Track if changes were made
-  const hasChanges = name !== initialName || email !== initialEmail;
+  const userUID = getOrCreateUserId()
 
+  const hasChanges = name !== initialName || email !== initialEmail;
+  const { data } = useInitUserQuery(userUID)
+
+  React.useEffect(()=> {
+    if (!data) return
+    setName(data.userName ?? initialName)
+    setName(data.email ?? initialEmail) 
+    console.log(data)
+
+  }, [data])
+
+
+  const [updateMethod] = useUpdateUserByUUIDMutation()
   const handleSave = () => {
     // TODO: connect to API
-    console.log('Saving user info:', { name, email });
+    updateMethod({ uuid: userUID, userName:name })
   };
 
   const handleAvatarClick = () => {

@@ -1,27 +1,23 @@
 import * as React from "react";
 import {
-  Box,
   Button,
   ButtonGroup,
   CircularProgress,
   Grid,
-  MenuItem,
-  Modal,
-  Paper,
   Stack,
   Typography,
   useTheme,
 } from "@mui/material";
-import { SubmitModal } from "./SubmitModal";
 import SessionLeaderboardCard from "./SessionLeaderboardCard";
 import { useGetDatasetsQuery, type DatasetT } from "../../redux/api/gameApi";
 import { useSearchParams } from "react-router-dom";
-import type { resultT } from "../../redux/api/gameResult";
+import { useSubmitResultMutation, type resultT } from "../../redux/api/gameResult";
 import Chart from "./Chart";
-import { CalcScore, lerpColor } from "../../lib/helper";
+import { CalcScore, getOrCreateUserId, lerpColor } from "../../lib/helper";
 import SetInfoCard from "./SetInfoCard";
 import ProgressBlock from "./ProgressBlock";
 import SpeedIcon from "@mui/icons-material/Speed";
+import ResultsModal from "./ResultsModal";
 
 
 const StoppingGame: React.FC = () => {
@@ -35,24 +31,24 @@ const StoppingGame: React.FC = () => {
   const [results, setResults] = React.useState<resultT[]>([])
 
   const [autoPlay, setAutoPlay] = React.useState<boolean>(false);
-
+  const storageUserID = getOrCreateUserId();
 
   const { data: dataSets, isLoading: dataIsLoading } = useGetDatasetsQuery(setIds)
 
   const [currentSet , setCurrentSet] = React.useState<DatasetT | null>(null)
-  const [sessionStarted, setSessionStarted] = React.useState<boolean>(false)
+  const [resultViewOpen, setResultViewOpen] = React.useState<boolean>(false)
   const [currentSetStarted, setCurrentSetStarted] = React.useState<boolean>(false)
 
   const [currentRowIndex, setCurrentRowIndex] = React.useState<number>(0);
   const [currentSetIndex, setCurrentSetIndex] = React.useState<number>(0);
   const [lastRowIndex, setLastRowIndex] = React.useState<number>(0);
 
-  const [isModalOpen, setIsModalOpen] = React.useState<boolean>(false);
-
   const type = Number(searchParams.get("type"));
   const defaultGameSpeed = searchParams.get("speed") ? Number(searchParams.get("speed")) : 50;
   const [gameSpeed, setGameSpeed] = React.useState<number>(defaultGameSpeed);
   const [speedSetting, SetSpeedSetting] = React.useState<number>(0);
+
+  const [ SubmitMethod ] = useSubmitResultMutation()
 
   React.useEffect(()=>{
     switch (speedSetting) {
@@ -83,30 +79,41 @@ const StoppingGame: React.FC = () => {
   // }
 
   React.useEffect(()=>{
-    if (dataSets && !dataIsLoading && !sessionStarted){
+    if (dataSets && !dataIsLoading){
       setCurrentSet(dataSets[0])
       setCurrentRowIndex(0)
       setCurrentSetIndex(0)
       setLastRowIndex(currentSet?.rows?.length ?? 0)
     }
-  },[currentSet?.rows?.length, dataIsLoading, dataSets, sessionStarted])
+  },[currentSet?.rows?.length, dataIsLoading, dataSets])
 
   const stopAuto = () => {
     setAutoPlay(false)
     saveCurrentResults()
-    // setCurrentSetIndex((v) => v < (dataSets?.length ?? 0) ? v+1 : v)
+    setResultViewOpen(true)
   };
+
+  const HandleNext = () => {
+    setResultViewOpen(false)
+    setCurrentRowIndex(0)
+    setCurrentSetIndex((v) => {
+      return v < (dataSets?.length ?? 0) ? v + 1 : v
+    });
+    setCurrentSetStarted(false)
+  }
+
+  const HandleSubmit = () => {
+    SubmitMethod(results[currentSetIndex])
+  }
 
   const saveCurrentResults = () => {
     if (!currentSet || !currentSet.rows) return
     const result: resultT = {
-      userId: 0,
+      uuid: storageUserID,
       datasetId: currentSet?.id,
-      sessionId: 0,
       stoppingStep: currentRowIndex,
       score: CalcScore(currentSet.rows[currentRowIndex]),
     }
-
     setResults(res => [...res, result])
   }
 
@@ -155,15 +162,17 @@ const StoppingGame: React.FC = () => {
                   )}
                 />
 
-                <Chart 
-                  data={currentSet.rows} 
-                  currentRowIndex={currentRowIndex}
-                  lastRowIndex={lastRowIndex}
-                  setCurrentRowIndex={setCurrentRowIndex} 
-                  gameSpeed={gameSpeed} 
-                  autoPlay={autoPlay}
-                  stopMethod={() => stopAuto()}
-                />
+                {dataSets && dataSets.map((set, index)=>(
+                  index === currentSetIndex ? <Chart
+                    data={set.rows ?? []}
+                    currentRowIndex={currentRowIndex}
+                    lastRowIndex={lastRowIndex}
+                    setCurrentRowIndex={setCurrentRowIndex}
+                    gameSpeed={gameSpeed}
+                    autoPlay={autoPlay}
+                    stopMethod={() => stopAuto()}
+                  />: <></>
+                ))  }
                 <Grid container justifyContent="center" padding={2}>
                   <Stack spacing={1} alignItems="center">
                     <Stack direction="row" spacing={1} alignItems="center">
@@ -251,22 +260,6 @@ const StoppingGame: React.FC = () => {
                 </Grid>
               </Stack>
             )}
-
-            {/* <Modal
-              open={isModalOpen}
-              onClose={handleCloseModal}
-              aria-labelledby="parent-modal-title"
-            >
-              <SubmitModal 
-                currentRow={currentRow}
-                currentBatch={currentBatch}
-                dataset={selectedDataset}
-                method={selectedMethod}
-                confidenceLevel={selectedConfidence}
-                bias={selectedBias}
-                recallTarget={selectedRecallTarget}
-              />
-            </Modal> */}
           </Grid>
         </Stack>
       </Grid>
@@ -282,6 +275,19 @@ const StoppingGame: React.FC = () => {
           ))}
         </Stack>
       </Grid>
+      {currentSet 
+        && currentSet.rows 
+        && results.length 
+        && results[currentSetIndex] 
+        && <ResultsModal 
+        open={resultViewOpen} 
+        onClose={() => setResultViewOpen(false)}
+        HandleNext={() => HandleNext()}
+        HandleSubmit={() => HandleSubmit()}
+        results={results[currentSetIndex]}
+        data={currentSet.rows[currentRowIndex]} 
+        isLastSet={dataSets?.length === (currentSetIndex + 1)}
+      />}
     </Grid>
   );
 };

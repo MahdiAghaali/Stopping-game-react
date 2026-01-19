@@ -5,11 +5,12 @@ import {
   Grid,
   Divider,
   Box,
-  Chip,
   Collapse,
 } from "@mui/material";
 import type { DatasetT } from "../../redux/api/gameApi";
-import type { resultT } from "../../redux/api/gameResult";
+import { useGetLeaderboardQuery, type resultT } from "../../redux/api/gameResult";
+import SetTopScores from "./SetTopScores";
+import { getOrCreateUserId } from "../../lib/helper";
 
 type Props = {
   isActive: boolean;
@@ -17,19 +18,31 @@ type Props = {
   result: resultT | undefined;
 };
 
-// 🔧 Mocked leaderboard data for this dataset
-const mockTopScores = [
-  { name: "Guest user 12", score: 92 },
-  { name: "Alice", score: 87 },
-  { name: "Guest user 3", score: 81 },
-];
-
 const SetInfoCard = ({
   isActive,
   set,
   result,
 }: Props) => {
-  const personalBest = result?.score ?? null;
+
+  const {data} = useGetLeaderboardQuery()
+  if (!data) return;
+
+  const userUID = getOrCreateUserId()
+  const sortedData = data
+    .filter((val) => val.datasetId === set.id)
+    .filter((v,i) => i<3)
+    .map((val) => ({
+      playerName: val.username,
+      dataset: val.datasetName,
+      score: val.score
+      }))
+    .sort(
+      (a, b) => b.score - a.score
+    );
+
+  const userScores = data?.filter((v) => v.userUID === userUID && v.datasetId === set.id)
+  const topScore = Math.max(...sortedData.map(v => v.score), 0)
+  const personalBest = Math.max(result?.score ?? 0, Math.max(...userScores.map(v => v.score), 0))
 
   return (
     <Paper
@@ -85,7 +98,7 @@ const SetInfoCard = ({
               Top Score
             </Typography>
             <Typography variant="body2">
-              {set.row_count}
+              {topScore}
             </Typography>
           </Grid>
         </Grid>
@@ -117,30 +130,8 @@ const SetInfoCard = ({
               </Typography>
 
               <Stack spacing={1}>
-                {mockTopScores.map((entry, index) => (
-                  <Box
-                    key={entry.name}
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip
-                        size="small"
-                        label={`#${index + 1}`}
-                        color={index === 0 ? "warning" : "default"}
-                      />
-                      <Typography variant="body2">
-                        {entry.name}
-                      </Typography>
-                    </Stack>
-
-                    <Typography variant="body2" fontWeight={500}>
-                      {entry.score}
-                    </Typography>
-                  </Box>
+                {!sortedData ? <>No scores for this Data set yet</> : sortedData.map((entry, index) => (
+                  <SetTopScores userName={entry.playerName} score={entry.score} index={index}/>
                 ))}
               </Stack>
             </Box>

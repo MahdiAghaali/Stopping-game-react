@@ -48,7 +48,7 @@ export default function RegistryTable({ rows, HandleAddDataSet }: Props) {
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', height:'70vh'}}>
       <Paper sx={{ width: '100%', mb: 2 }}>
         <TableContainer>
           <Table

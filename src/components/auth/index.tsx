@@ -1,41 +1,21 @@
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext } from "react";
+import { useInitUserQuery, type UserT } from "../../redux/api/auth";
+import { getOrCreateUserId } from "../../lib/helper";
 
-type UserIdContextValue = {
-  userId: string | null;
-  isReady: boolean;
-};
 
-const UserIdContext = createContext<UserIdContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "anonymous_user_id";
-
-function getOrCreateUserId(): string {
-  let id = localStorage.getItem(STORAGE_KEY);
-
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(STORAGE_KEY, id);
-  }
-
-  return id;
-}
+const UserIdContext = createContext<UserT | undefined>(undefined);
 
 export const UserIdProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [userId, setUserId] = useState<string | null>(null);
+  const userUID = getOrCreateUserId();
 
-  useEffect(() => {
-    const id = getOrCreateUserId();
-    setUserId(id);
-  }, []);
+  const { data } = useInitUserQuery(userUID)
 
   return (
     <UserIdContext.Provider
-      value={{
-        userId,
-        isReady: userId !== null,
-      }}
+      value={data}
     >
       {children}
     </UserIdContext.Provider>
