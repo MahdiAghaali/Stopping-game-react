@@ -86,10 +86,24 @@ const StoppingGame: React.FC = () => {
     if (dataSets && !dataIsLoading) {
       setCurrentSet(dataSets[0])
       setCurrentRowIndex(0)
-      setCurrentSetIndex(0)
+      // setCurrentSetIndex(0)
       setLastRowIndex(currentSet?.rows?.length ?? 0)
     }
-  }, [currentSet?.rows?.length, dataIsLoading, dataSets])
+  }, [currentSet?.rows?.length, dataIsLoading, dataSets]);
+
+  React.useEffect(() => {
+    if (dataSets && !dataIsLoading) {
+      if (currentSetIndex < dataSets.length) {
+        setCurrentSet(dataSets[currentSetIndex]);
+      } else {
+        setCurrentSet(dataSets[dataSets.length - 1]);
+        setCurrentSetIndex(dataSets.length - 1);
+      }
+    } else {
+      setCurrentSetIndex(0);
+      setCurrentSet(null);
+    }
+  }, [currentSetIndex, dataIsLoading, dataSets]);
 
   const stopAuto = () => {
     setAutoPlay(false)
@@ -100,11 +114,13 @@ const StoppingGame: React.FC = () => {
   };
 
   const HandleNext = () => {
-    setResultViewOpen(false)
-    setCurrentRowIndex(0)
-    setCurrentSetIndex((v) => {
-      return v < (dataSets?.length ?? 0) ? v + 1 : v
-    });
+    setResultViewOpen(false);
+    setCurrentRowIndex(0);
+
+    if (dataSets && dataSets.length > currentSetIndex) {
+      setCurrentSetIndex((v) => v + 1);
+    }
+
     setCurrentSetStarted(false)
   }
 
@@ -113,10 +129,12 @@ const StoppingGame: React.FC = () => {
   }
 
   const saveCurrentResults = () => {
-    if (!currentSet || !currentSet.rows) return
+    if (!currentSet || !currentSet.rows) return;
+    const set = dataSets?.[currentSetIndex];
+    if (!set) return;
     const result: resultT = {
       uuid: storageUserID,
-      datasetId: currentSet?.id,
+      datasetId: set.id,
       stoppingStep: currentRowIndex,
       score: CalcScore(currentSet.rows[currentRowIndex]),
     }
@@ -141,6 +159,7 @@ const StoppingGame: React.FC = () => {
 
   return (
     <Grid container spacing={2} padding={2} sx={{ justifyContent: "space-between" }}>
+      {currentSetIndex}
       <Grid size={9}>
         <Stack>
           <Grid spacing={2} padding={2}>
