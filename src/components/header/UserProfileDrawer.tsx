@@ -86,7 +86,7 @@ const UserProfileDrawer: React.FC = () => {
         />
 
         {/* Save Button */}
-        {hasChanges && (
+        {hasChanges && name!=="" && (
           <Button
             variant="contained"
             fullWidth
