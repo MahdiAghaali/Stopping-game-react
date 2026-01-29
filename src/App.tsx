@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import StoppingGame from "./components/stoppingGame";
@@ -11,13 +11,13 @@ import { Box } from "@mui/material";
 function App() {
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <ThemeControllerProvider>
         <Provider store={store}>
             <Header />
             <Box padding={2}>
             <Routes>
-              <Route path="/" element={<Home/>}/>
+              <Route index path="/" element={<Home/>}/>
               <Route path="/gameSetup" element={<GameSetup/>}/>
               <Route path="/game" element={<StoppingGame/>}/>
               <Route path="/*" element={<>not found</>} />
@@ -25,7 +25,7 @@ function App() {
           </Box>
         </Provider>
       </ThemeControllerProvider>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 
