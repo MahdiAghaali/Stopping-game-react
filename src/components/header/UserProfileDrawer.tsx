@@ -21,8 +21,8 @@ const UserProfileDrawer: React.FC = () => {
   // Track if changes were made
   const userUID = getOrCreateUserId()
 
-  const hasChanges = name !== initialName || email !== initialEmail;
   const { data } = useInitUserQuery(userUID)
+  const hasChanges = name !== (data?.userName || initialName) || email !== (data?.email || initialEmail);
 
   React.useEffect(()=> {
     if (!data) return
@@ -36,6 +36,7 @@ const UserProfileDrawer: React.FC = () => {
   const [updateMethod] = useUpdateUserByUUIDMutation()
   const handleSave = () => {
     // TODO: connect to API
+    if (name==="") return;
     updateMethod({ uuid: userUID, userName:name })
   };
 
