@@ -27,7 +27,7 @@ const UserProfileDrawer: React.FC = () => {
   React.useEffect(()=> {
     if (!data) return
     setName(data.userName ?? initialName)
-    setName(data.email ?? initialEmail) 
+    setEmail(data.email ?? initialEmail) 
     console.log(data)
 
   }, [data])
